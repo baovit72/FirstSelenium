@@ -22,6 +22,10 @@ namespace WindowsFormsApp10
         public List<Product> products { get; set; }
         List<string> tabHandler;
 
+        //User
+        public string username;
+        public string password;
+
         private SendoPurchase __instance;
         private ChromeDriver driver;
         public int hh { get; set; }
@@ -31,6 +35,7 @@ namespace WindowsFormsApp10
         {
             hh = mm = ss = -1;
             tabHandler = new List<string>();
+            username = password = "";
         }
 
         public SendoPurchase GetInstance()
@@ -49,8 +54,13 @@ namespace WindowsFormsApp10
 
         public bool __threadingGetSendoClock()
         {
-            using (ChromeDriver threadDriver = new ChromeDriver())
+            ChromeOptions opt = new ChromeOptions();
+           // opt.AddUserProfilePreference("profile.default_content_setting_values.images", 2);
+            
+
+            using (ChromeDriver threadDriver = new ChromeDriver(opt))
             {
+                Debug.WriteLine(driver.CurrentWindowHandle);
                 threadDriver.Navigate().GoToUrl("https://www.sendo.vn/");
                 threadDriver.Manage().Timeouts().ImplicitWait = TimeSpan.FromMilliseconds(20000); 
                 var hour = threadDriver.FindElementByClassName("sd-hour");
@@ -62,7 +72,7 @@ namespace WindowsFormsApp10
                             && ss == 0
                             ))
                 {
-                    Thread.Sleep(10);
+                    Thread.Sleep(5);
                     hh = int.Parse(hour.GetAttribute("innerText"));
                     mm = int.Parse(minute.GetAttribute("innerText"));
                     ss = int.Parse(second.GetAttribute("innerText"));
@@ -100,8 +110,8 @@ namespace WindowsFormsApp10
                 var passwordField = driver.FindElementByXPath("//input[@name='password']");
                 var submitBtn = driver.FindElementByXPath("//button[text()='Đăng nhập']");
 
-                userNameField.SendKeys("0855765343");
-                passwordField.SendKeys("hnq18082002");
+                userNameField.SendKeys(username.Trim());
+                passwordField.SendKeys(password.Trim());
 
                 submitBtn.Click();
 
@@ -169,6 +179,11 @@ namespace WindowsFormsApp10
                     var purchaseBtn = driver.FindElementByClassName("button_fKtq");
                     purchaseBtn.Click();
 
+                    //Click lần 2 
+                    var purchaseBtn2 = driver.FindElementsByClassName("button_fKtq");
+                    if (purchaseBtn2.Count > 0)
+                        purchaseBtn2[0].Click();
+
                     Debug.WriteLine(t);
 
                     products[pIdx++].Status = "Purchased";
@@ -182,5 +197,12 @@ namespace WindowsFormsApp10
         }
 
 
+        public void ResetState()
+        {
+            isLoggedIn = false;
+            isAddedToCart = false;
+            isPurchased = false;
+        }
     }
+  
 }

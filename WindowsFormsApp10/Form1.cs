@@ -9,7 +9,7 @@ using System.Windows.Forms;
 using OpenQA.Selenium;
 using OpenQA.Selenium.Chrome;
 using System.Threading;
-
+using OpenQA.Selenium.Remote;
 namespace WindowsFormsApp10
 {
 
@@ -25,11 +25,7 @@ namespace WindowsFormsApp10
         {
             InitializeComponent();
 
-            ChromeOptions opt = new ChromeOptions();
-            // opt.AddArgument("--headless");
-            driver = new ChromeDriver(opt);
-
-            driver.Manage().Timeouts().ImplicitWait = TimeSpan.FromMilliseconds(20000);
+            driver = CreateChromeDriver();
 
             sendo = new SendoPurchase();
             sendo.setDriver(driver);
@@ -40,7 +36,15 @@ namespace WindowsFormsApp10
             //Lưu danh sách sản phẩm để xử lý
             products = new List<Product>();
 
+            comboBox1.Items.Add("0855765343:hnq18082002");
+            comboBox1.Items.Add("0855715527:hnq18082002");
+            comboBox1.Items.Add("0941638715:hnq18082002");
+            comboBox1.Items.Add("0352986463:hnq18082002");
+
+
         }
+
+       
 
         private void button1_Click(object sender, EventArgs e)
         {
@@ -62,7 +66,14 @@ namespace WindowsFormsApp10
 
         private void clockThreading()
         {
-            sendo.__threadingGetSendoClock();
+            try
+            {
+                sendo.__threadingGetSendoClock();
+            }
+            catch (Exception e)
+            {
+
+            }
             MessageBox.Show("Done timer!!!");
         }
 
@@ -90,31 +101,64 @@ namespace WindowsFormsApp10
         {
             //Tiến hành login
             sendo.DoLogin();
+            //Tiến hành sleep để tiết kiệm năng lượng 
+
+            //=> Placeholder.................
+
+            bool bugDetectorPermission = false;
             while (true)
             {
                 //Thêm vào giỏ hàng
-                if (sendo.hh == 0 && sendo.mm <= 10 && !sendo.isAddedToCart)
+                if (sendo.hh == 0 && sendo.mm <= 10 && sendo.mm > -1 && !sendo.isAddedToCart)
                 {
                     sendo.products = products;
                     sendo.AddToCart();
                     RefreshListBox();
                 }
+                //Bug gì đầy :V chuyển từ 1 sang 0 nhưng chuyển phút trước dẫn đến tình trạng nhận nhầm thành 0:0:0
+                if (sendo.hh == 00 && sendo.mm == 00 && sendo.ss <=50  && sendo.ss>=30 && !bugDetectorPermission)
+                {
+                    bugDetectorPermission = true;
+                }
 
                 //Purchase
-                if (sendo.hh == 00 && sendo.mm == 00 && sendo.ss == 00 )
+                    if (sendo.hh == 00 && sendo.mm == 00 && sendo.ss == 00 && bugDetectorPermission)
                 {
                     sendo.StartPurchase();
                     RefreshListBox();
                 }
-                Thread.Sleep(10);
+                Thread.Sleep(5);
             }
         }
-
+        private ChromeDriver CreateChromeDriver()
+        {
+            ChromeOptions opt = new ChromeOptions();
+            opt.AddArgument(@"--incognito");
+            ChromeDriver driver;
+            driver = new ChromeDriver(opt);
+            driver.Manage().Timeouts().ImplicitWait = TimeSpan.FromSeconds(20);
+            driver.Manage().Cookies.DeleteAllCookies();
+            return driver;
+        }
         private Thread clockThread;
         private Thread updateThread;
         private Thread sendoThread;
         private void button2_Click(object sender, EventArgs e)
         {
+            sendo.ResetState();
+            if (comboBox1.SelectedIndex == -1) return;
+            if (driver != null)
+            {
+                driver.Close();
+                driver.Quit();
+            }
+            driver = CreateChromeDriver();
+
+            sendo.setDriver(driver);
+
+            //Lấy tài khoản đăng nhập
+            sendo.username = comboBox1.SelectedItem.ToString().Split(':')[0];
+            sendo.password = comboBox1.SelectedItem.ToString().Split(':')[1];
             if (clockThread != null && updateThread != null)
             {
                 clockThread.Abort();
@@ -145,7 +189,7 @@ namespace WindowsFormsApp10
                 updateThread.Abort();
                 sendoThread.Abort();
             }
-
+            driver.Close();
             driver.Quit();
         }
         private void RefreshListBox()
