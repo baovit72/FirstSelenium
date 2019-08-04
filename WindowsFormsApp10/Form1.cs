@@ -36,10 +36,6 @@ namespace WindowsFormsApp10
             //Lưu danh sách sản phẩm để xử lý
             products = new List<Product>();
 
-            comboBox1.Items.Add("0855765343:hnq18082002");
-            comboBox1.Items.Add("0855715527:hnq18082002");
-            comboBox1.Items.Add("0941638715:hnq18082002");
-            comboBox1.Items.Add("0352986463:hnq18082002");
 
 
         }
